@@ -1,0 +1,60 @@
+#!/bin/bash --login
+#SBATCH --open-mode=append
+#SBATCH --output=logs/regular_benchmark.out
+#SBATCH --error=logs/regular_benchmark.err
+#SBATCH --ntasks=1
+#SBATCH --time=12:00:00  
+#SBATCH --mem-per-cpu=256G
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=MAIL@DOMAIN
+
+source ../config
+echo "------------------------------------------------------------------------"
+date
+echo "Number of slots: " $NSLOTS
+echo $BASE_FOLDER
+$MPTOPCOM1 --version 2>&1
+TIME=`which time`;
+$MPIRUN --version
+rm -f benchmark.result benchmark.error
+
+export GLIBCXX_FORCE_NEW=1
+
+# Remove files from old runs
+rm -f cube4_reg.result cube4_reg.error
+rm -f polytropes5_reg.result polytropes5_reg.error
+rm -f D5xD2_reg.result D5xD2_reg.error
+rm -f D6xD2_reg.result D6xD2_reg.error
+
+export OPTS="--regular --flip-cache 10000 --regularity-cache 10000 --orbit-cache 10000"
+echo "OPTS are: " $OPTS
+
+echo "      ---"
+echo "Cube 4 --regular: (235'277)"
+{ $TIME -f "real %e  user %U  sys %S" /bin/bash -c "$MPTOPCOM1 $OPTS < cube_4.dat 1>cube4_reg.result 2>cube4_reg.error" ; } 2>&1
+grep "Totalcount" cube4_reg.error
+wc -l cube4_reg.result;
+rm -f cube4_reg.result cube4_reg.error
+
+
+echo "      ---"
+echo "polytropes5 --regular --central: (27'248)"
+{ $TIME -f "real %e  user %U  sys %S" /bin/bash -c "$MPTOPCOM1 $OPTS --central < polytropes5.dat 1>polytropes5_reg.result 2>polytropes5_reg.error" ; } 2>&1
+grep "Totalcount" polytropes5_reg.error
+wc -l polytropes5_reg.result;
+rm -f polytropes5_reg.result polytropes5_reg.error
+
+echo "      ---"
+echo "D5xD2 --regular: (13'621)"
+{ $TIME -f "real %e  user %U  sys %S" /bin/bash -c "$MPTOPCOM1 $OPTS < D5xD2.dat 1>D5xD2_reg.result 2>D5xD2_reg.error" ; } 2>&1
+grep "Totalcount" D5xD2_reg.error
+wc -l D5xD2_reg.result;
+rm -f D5xD2_reg.result D5xD2_reg.error
+
+echo "      ---"
+echo "D6xD2 --regular: (531'862)"
+{ $TIME -f "real %e  user %U  sys %S" /bin/bash -c "$MPTOPCOM1 $OPTS < D6xD2.dat 1>D6xD2_reg.result 2>D6xD2_reg.error" ; } 2>&1
+grep "Totalcount" D6xD2_reg.error
+wc -l D6xD2_reg.result;
+rm -f D6xD2_reg.result D6xD2_reg.error
+
